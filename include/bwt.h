@@ -1,21 +1,5 @@
-
 #include <stddef.h>
 
-/*
- * Structure for rotation in BWT
- */
-typedef struct {
-    char *rotation; // Rotation string
-    int index;      // Original index
-} Rotation;
-
-/*
- * Compares two rotations for sorting
- * @param a: First rotation
- * @param b: Second rotation
- * @return: Comparison result (-1, 0, 1)
- */
-int compare_rotations(const void *a, const void *b);
 
 /*
  * Forward BWT transform
@@ -36,4 +20,13 @@ void bwt_encode(unsigned char *input, size_t len,
  */
 void bwt_decode(unsigned char *input, size_t len,
                 int primary_index, unsigned char *output);
+
+
+/*
+* Builds suffix array for efficient BWT
+* @param text: Input text
+* @param n: Length of text
+* @return: Suffix array
+*/
+int *build_suffix_array(unsigned char *text , int n);
 
