@@ -98,25 +98,23 @@ void rle2_decode(unsigned char *input, size_t len,
 
     while (in_pos < len) {
 
-        if (input[in_pos] == 0 ||
-            input[in_pos] == 1) {
+        if (input[in_pos] == 0 || input[in_pos] == 1) {
 
-            size_t run = 0;
+            size_t value = 0;
             size_t power = 1;
 
+            /* reconstruct LSB-first integer */
             while (in_pos < len &&
-                   (input[in_pos] == 0 ||
-                    input[in_pos] == 1)) {
+                   (input[in_pos] == 0 || input[in_pos] == 1)) {
 
                 if (input[in_pos] == 1) {
-                    run += power;
+                    value += power;
                 }
 
                 power <<= 1;
                 in_pos++;
             }
-
-            run += (power >> 1);
+            size_t run = value + 1;
 
             for (size_t i = 0; i < run; i++) {
                 output[out_pos++] = 0;

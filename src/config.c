@@ -1,24 +1,12 @@
-#include "ini.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "config.h"
+#include "ini.h"
 
-typedef struct {
-    /* [General] */
-    int         block_size;       
-    int         rle1_enabled;     /* 0 or 1 */
-    char        bwt_type[32];     /* matrix or suffix_array */
-    int         mtf_enabled;
-    int         rle2_enabled;
-    int         huffman_enabled;
 
-    /* [Performance] */
-    int         benchmark_mode;
-    int         output_metrics;
 
-    /* [Paths] */
-    char        input_directory[256];
-} config_t;
 
 
 static int parse_bool(const char* value) {
@@ -30,7 +18,7 @@ static int parse_int_comment(const char* value) {
     strncpy(buf, value, sizeof(buf));
     buf[sizeof(buf)-1] = '\0';
     char* hash = strchr(buf, '#');
-    if (hash) *hash = '\0';    
+    if (hash) *hash = '\0';
     return atoi(buf);
 }
 
@@ -46,32 +34,32 @@ static void parse_str_comment(const char* value, char* dest, size_t dest_size) {
 }
 
 /*
-* Handler function for ini parsing, called for each name=value pair parsed.
-* Returns 1 on success, 0 on error - unknown section name or invalid value
-*/
-static int config_handler(void* user, const char* section,const char* name,const char* value)
+ * Handler function for ini parsing, called for each name=value pair parsed.
+ * Returns 1 on success, 0 on error - unknown section name or invalid value
+ */
+static int config_handler(void* user, const char* section, const char* name, const char* value)
 {
     config_t* cfg = (config_t*)user;
 
     #define EQUAL(s, n) (strcmp(section, s) == 0 && strcmp(name, n) == 0)
 
-    /*  [General]  */
+    /* [General] */
     if      (EQUAL("General", "block_size"))      cfg->block_size      = parse_int_comment(value);
     else if (EQUAL("General", "rle1_enabled"))    cfg->rle1_enabled    = parse_bool(value);
-    else if (EQUAL("General", "bwt_type"))        parse_str_comment(value, cfg->bwt_type,  sizeof(cfg->bwt_type));
+    else if (EQUAL("General", "bwt_type"))        parse_str_comment(value, cfg->bwt_type, BWT_TYPE_SIZE);
     else if (EQUAL("General", "mtf_enabled"))     cfg->mtf_enabled     = parse_bool(value);
     else if (EQUAL("General", "rle2_enabled"))    cfg->rle2_enabled    = parse_bool(value);
     else if (EQUAL("General", "huffman_enabled")) cfg->huffman_enabled = parse_bool(value);
 
-    /*  [Performance]  */
+    /* [Performance] */
     else if (EQUAL("Performance", "benchmark_mode")) cfg->benchmark_mode = parse_bool(value);
     else if (EQUAL("Performance", "output_metrics")) cfg->output_metrics = parse_bool(value);
 
-    /*  [Paths]  */
+    /* [Paths] */
     else if (EQUAL("Paths", "input_directory"))
-        parse_str_comment(value, cfg->input_directory, sizeof(cfg->input_directory));
+        parse_str_comment(value, cfg->input_directory, INPUT_DIR_SIZE);
 
-    else return 0;   /* unknown key → signal error */
+    else return 0;   /* unknown key -> signal error */
 
     return 1;        /* all good, keep parsing */
 
@@ -79,23 +67,23 @@ static int config_handler(void* user, const char* section,const char* name,const
 }
 
 /*
-* Loads config from ini file, applying defaults for missing values
-* @param filepath: Path to ini file
-* @param cfg: Pointer to config struct to populate
-* @return: 0 on success, -1 on failure (file not found or parse error)
-*/
+ * Loads config from ini file, applying defaults for missing values.
+ * @param filepath: Path to ini file
+ * @param cfg: Pointer to config struct to populate
+ * @return: 0 on success, -1 on failure (file not found or parse error)
+ */
 int config_load(const char* filepath, config_t* cfg) {
 
     /* sensible defaults before parsing */
     cfg->block_size      = 500000;
     cfg->rle1_enabled    = 1;
-    strncpy(cfg->bwt_type, "matrix", sizeof(cfg->bwt_type));
+    strncpy(cfg->bwt_type, "matrix", BWT_TYPE_SIZE);
     cfg->mtf_enabled     = 1;
     cfg->rle2_enabled    = 1;
     cfg->huffman_enabled = 1;
     cfg->benchmark_mode  = 0;
     cfg->output_metrics  = 1;
-    strncpy(cfg->input_directory, "./", sizeof(cfg->input_directory));
+    strncpy(cfg->input_directory, "./", INPUT_DIR_SIZE);
 
     int result = ini_parse(filepath, config_handler, cfg);
 
@@ -108,7 +96,7 @@ int config_load(const char* filepath, config_t* cfg) {
         return -1;
     }
 
-    /*  validate block_size range  */
+    /* validate block_size range */
     if (cfg->block_size < 100000 || cfg->block_size > 900000) {
         fprintf(stderr, "[config] WARNING: block_size %d out of range [100000,900000], clamping\n",
                 cfg->block_size);

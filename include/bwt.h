@@ -1,6 +1,6 @@
+#ifndef BWT_H
+#define BWT_H
 #include <stddef.h>
-
-
 /*
  * Forward BWT transform
  * @param input: Input byte array
@@ -29,4 +29,4 @@ void bwt_decode(unsigned char *input, size_t len,
 * @return: Suffix array
 */
 int *build_suffix_array(unsigned char *text , int n);
-
+#endif /* BWT_H */

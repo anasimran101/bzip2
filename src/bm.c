@@ -9,26 +9,26 @@
  * @param block_size: Size of each block in bytes
  * @return: BlockManager structure containing all blocks
  */
-BlockManager *divide_into_blocks(const char *filename, size_t block_size)  {
+BlockManager *divide_into_blocks(const char *filename, size_t block_size) {
     
     FILE *fp = fopen(filename, "br");
     if(fp == NULL) {
         fprintf(stderr, "Error opening file: %s\n", filename);
         return NULL;
     }
-    BlockManager *bm = (BlockManager* )malloc(sizeof(BlockManager));
+    BlockManager *bm = (BlockManager*)malloc(sizeof(BlockManager));
     if(bm == NULL) {
         fprintf(stderr, "Error allocating memory for BlockManager\n");
         fclose(fp);
         return NULL;
     }
 
-    //calculate number of blocks and allocate memory for them
     bm->block_size = block_size;
     fseek(fp, 0, SEEK_END);
-    bm->num_blocks = ftell(fp) / block_size + (ftell(fp) % block_size != 0); // ceil(file_size / block_size) 
+    long file_size = ftell(fp);            
+    bm->num_blocks = file_size / block_size + (file_size % block_size != 0);
     fseek(fp, 0, SEEK_SET);
-    
+
     bm->blocks = (Block*)malloc(bm->num_blocks * sizeof(Block));
     if(bm->blocks == NULL) {
         fprintf(stderr, "Error allocating memory for blocks\n");
@@ -43,10 +43,14 @@ BlockManager *divide_into_blocks(const char *filename, size_t block_size)  {
         bm->blocks[i].data = (unsigned char*)malloc(block_size);
         fread(bm->blocks[i].data, 1, block_size, fp);
         bm->blocks[i].size = block_size;
+
         if(i == bm->num_blocks - 1) {
-            bm->blocks[i].size = ftell(fp) % (block_size +1);
+            size_t remainder = file_size % block_size;
+            bm->blocks[i].size = (remainder != 0) ? remainder : block_size;
+            bm->blocks[i].original_size = bm->blocks[i].size;
             break;
         }
+
         bm->blocks[i].original_size = bm->blocks[i].size;
         i++;
     }

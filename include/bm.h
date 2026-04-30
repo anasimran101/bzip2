@@ -1,4 +1,5 @@
-
+#ifndef BM_H
+#define BM_H
 #include <stddef.h>
 
 /*
@@ -41,3 +42,5 @@ int reassemble_blocks(BlockManager *manager, const char *output_filename);
  */
 void free_block_manager(BlockManager *manager);
 
+
+#endif /* BM_H */

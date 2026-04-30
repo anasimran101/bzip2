@@ -1,5 +1,6 @@
 #include <stddef.h>
-
+#include <stdint.h>
+#include "mtf.h"
 /*
  * Forward MTF transform
  * @param input: Input byte array
@@ -34,7 +35,6 @@ void mtf_encode(unsigned char *input, size_t len,
         }
         symbols[0] = temp;
 
-        while( i < len && symbols[input[++i]] == 0) {}
     }
 }
 
@@ -54,9 +54,11 @@ void mtf_decode(unsigned char *input, size_t len,
         symbols[i] = (unsigned char)i;
     }
 
-    for (size_t i = 0; i < len;) {
+    for (size_t i = 0; i < len; i++) {
+
         unsigned char index = input[i];
         unsigned char symbol = symbols[index];
+
         output[i] = symbol;
 
         // Move the symbol to the front
@@ -64,10 +66,5 @@ void mtf_decode(unsigned char *input, size_t len,
             symbols[j] = symbols[j - 1];
         }
         symbols[0] = symbol;
-
-        ++i;
-        while( i < len && symbols[input[i]] == 0) { output[i++] = symbol; }
-        
     }
 }
-

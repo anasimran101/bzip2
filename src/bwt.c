@@ -79,32 +79,47 @@ void bwt_encode(unsigned char *input, size_t len, unsigned char *output, int *pr
 }
 
 
-void bwt_decode(unsigned char *input, size_t len, int primary_index, unsigned char *output)
+void bwt_decode(unsigned char *input, size_t len,
+                 int primary_index, unsigned char *output)
 {
-    size_t count[256]          = {0};
-    size_t cumulative_freq[256] = {0};
-    size_t seen[256]           = {0};
+    size_t freq[256] = {0};
+    size_t occ[256]  = {0};
 
-    for (size_t i = 0; i < len; i++)
-        count[input[i]]++;
+    size_t *cumulative = malloc(256 * sizeof(size_t));
+    size_t *next       = malloc(len * sizeof(size_t));
 
-    cumulative_freq[0] = 0;
-    for (size_t i = 1; i < 256; i++)
-        cumulative_freq[i] = cumulative_freq[i-1] + count[i-1];
+    /* 1. frequency of characters */
+    for (size_t i = 0; i < len; i++) {
+        freq[input[i]]++;
+    }
 
-    size_t *lf_map = malloc(len * sizeof(size_t));
+    /* 2. cumulative frequency (F column start positions) */
+    cumulative[0] = 0;
+    for (size_t i = 1; i < 256; i++) {
+        cumulative[i] = cumulative[i - 1] + freq[i - 1];
+    }
 
+    /* 3. build LF mapping in L-space consistently */
     for (size_t i = 0; i < len; i++) {
         unsigned char c = input[i];
-        lf_map[cumulative_freq[c] + seen[c]] = i;
-        seen[c]++;
+        size_t f_pos = cumulative[c] + occ[c];
+
+        /* F[f_pos] corresponds to L[i] */
+        next[i] = f_pos;
+
+        occ[c]++;
     }
 
-    size_t index = (size_t)primary_index;
+    /* 4. invert permutation starting from primary_index */
+    size_t idx = (size_t)primary_index;
+
     for (size_t i = len; i-- > 0;) {
-        output[i] = input[index];
-        index     = lf_map[index];
+        output[i] = input[idx];
+
+        /* move in L-space using inverse LF */
+        idx = next[idx];
     }
 
-    free(lf_map);
+    free(next);
+    free(cumulative);
 }

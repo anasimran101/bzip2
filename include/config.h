@@ -1,29 +1,29 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #include <stdint.h>
 #include <stddef.h>
 
-typedef enum
-{
-    BWT_MATRIX,
-    BWT_SUFFIX_ARRAY
-} bwt_type_t;
 
-typedef struct
-{
-    /* General */
-    size_t block_size;
-    int rle1_enabled;
-    bwt_type_t bwt_type;
-    int mtf_enabled;
-    int rle2_enabled;
-    int huffman_enabled;
+/* explicit sizes matching the struct field declarations */
+#define BWT_TYPE_SIZE      32
+#define INPUT_DIR_SIZE    256
 
-    /* Performance */
-    int benchmark_mode;
-    int output_metrics;
+typedef struct {
+    /* [General] */
+    int         block_size;
+    int         rle1_enabled;     /* 0 or 1 */
+    char        bwt_type[BWT_TYPE_SIZE]; /* "matrix" or "suffix_array" */
+    int         mtf_enabled;
+    int         rle2_enabled;
+    int         huffman_enabled;
 
-    /* Paths */
-    uint8_t input_directory[256];
+    /* [Performance] */
+    int         benchmark_mode;
+    int         output_metrics;
 
+    /* [Paths] */
+    char        input_directory[INPUT_DIR_SIZE];
 } config_t;
 
 /*
@@ -38,3 +38,4 @@ int config_load(const char* filepath, config_t* cfg);
 * @param cfg: Pointer to config struct to print
 */
 void config_print(const config_t* cfg);
+#endif /* CONFIG_H */
