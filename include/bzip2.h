@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include "bwt.h"
 #include "mtf.h"
-#include "ans.h"
 #include "bm.h"
 #include "rle.h"
 /**

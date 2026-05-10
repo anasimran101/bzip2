@@ -10,48 +10,70 @@
  * @return: BlockManager structure containing all blocks
  */
 BlockManager *divide_into_blocks(const char *filename, size_t block_size) {
-    
-    FILE *fp = fopen(filename, "br");
-    if(fp == NULL) {
+
+    if (filename == NULL || block_size == 0) return NULL;
+
+    FILE *fp = fopen(filename, "rb");
+    if (fp == NULL) {
         fprintf(stderr, "Error opening file: %s\n", filename);
         return NULL;
     }
+
     BlockManager *bm = (BlockManager*)malloc(sizeof(BlockManager));
-    if(bm == NULL) {
-        fprintf(stderr, "Error allocating memory for BlockManager\n");
+    if (bm == NULL) {
         fclose(fp);
         return NULL;
     }
 
     bm->block_size = block_size;
+
     fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);            
-    bm->num_blocks = file_size / block_size + (file_size % block_size != 0);
+    long file_size_l = ftell(fp);
+
+    if (file_size_l < 0) {
+        fclose(fp);
+        free(bm);
+        return NULL;
+    }
+
+    size_t file_size = (size_t)file_size_l;
     fseek(fp, 0, SEEK_SET);
 
+    if (file_size == 0) {
+        bm->num_blocks = 0;
+        bm->blocks = NULL;
+        fclose(fp);
+        return bm;
+    }
+
+    bm->num_blocks = file_size / block_size +
+                     ((file_size % block_size) != 0);
+
     bm->blocks = (Block*)malloc(bm->num_blocks * sizeof(Block));
-    if(bm->blocks == NULL) {
-        fprintf(stderr, "Error allocating memory for blocks\n");
+    if (bm->blocks == NULL) {
         free(bm);
         fclose(fp);
         return NULL;
     }
 
     size_t i = 0;
-    while(1)
-    {
-        bm->blocks[i].data = (unsigned char*)malloc(block_size);
-        fread(bm->blocks[i].data, 1, block_size, fp);
-        bm->blocks[i].size = block_size;
+    while (i < bm->num_blocks) {
 
-        if(i == bm->num_blocks - 1) {
-            size_t remainder = file_size % block_size;
-            bm->blocks[i].size = (remainder != 0) ? remainder : block_size;
-            bm->blocks[i].original_size = bm->blocks[i].size;
+        bm->blocks[i].data = (unsigned char*)malloc(block_size);
+        if (bm->blocks[i].data == NULL) {
+            fclose(fp);
+            return NULL; 
+        }
+
+        size_t read_bytes = fread(bm->blocks[i].data, 1, block_size, fp);
+
+        bm->blocks[i].size = read_bytes;
+        bm->blocks[i].original_size = read_bytes;
+
+        if (i == bm->num_blocks - 1) {
             break;
         }
 
-        bm->blocks[i].original_size = bm->blocks[i].size;
         i++;
     }
 
@@ -76,7 +98,7 @@ int reassemble_blocks(BlockManager *manager, const char *output_filename) {
 
     for (size_t i = 0; i < manager->num_blocks; i++)
         fwrite(manager->blocks[i].data, 1, manager->blocks[i].size, fp);
-    
+    fclose(fp);
     return 0;
 }
 
@@ -94,4 +116,5 @@ void free_block_manager(BlockManager *manager) {
     free(manager);
     manager = NULL;
 }
+
 

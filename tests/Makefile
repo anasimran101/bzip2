@@ -13,7 +13,6 @@ CFLAGS ?= $(COMMON_CFLAGS) $(DEBUG_CFLAGS)
 
 # ---- explicit sources (kept as you want) ----
 SOURCES = \
-	$(SOURCE_DIR)/ans.c \
 	$(SOURCE_DIR)/config.c \
 	$(SOURCE_DIR)/ini.c \
 	$(SOURCE_DIR)/rle.c \
@@ -25,7 +24,6 @@ SOURCES = \
 
 # ---- convert to object files ----
 OBJECTS = \
-	$(OBJECT_DIR)/ans.o \
 	$(OBJECT_DIR)/config.o \
 	$(OBJECT_DIR)/ini.o \
 	$(OBJECT_DIR)/rle.o \
